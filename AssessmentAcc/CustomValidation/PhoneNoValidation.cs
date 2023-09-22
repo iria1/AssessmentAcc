@@ -36,10 +36,10 @@ namespace AssessmentAcc.CustomValidation
         {
             try
             {
-                var foo = AppSettings.Current;
+                var configuration = AppSettings.Current;
 
-                var url = foo.ApiUrl;
-                var key = foo.ApiKey;
+                var url = configuration.ApiUrl;
+                var key = configuration.ApiKey;
                 var phoneNo = Convert.ToString(value);
 
                 if (phoneNo.StartsWith("+62"))
@@ -63,11 +63,11 @@ namespace AssessmentAcc.CustomValidation
 
                 var response = client.Get(request);
 
-                var bar = response.Content;
+                var responseString = response.Content;
 
-                var sna = JsonConvert.DeserializeObject<PhoneNoValidation>(bar);
+                var responseObject = JsonConvert.DeserializeObject<PhoneNoValidation>(responseString);
 
-                return sna.valid;
+                return responseObject.valid;
             }
             catch (Exception)
             {
@@ -82,7 +82,6 @@ namespace AssessmentAcc.CustomValidation
 
         public string ApiUrl { get; set; }
         public string ApiKey { get; set; }
-
 
         public AppSettings(IConfiguration config)
         {
