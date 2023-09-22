@@ -10,6 +10,9 @@ namespace AssessmentAcc.Models
     {
         public static void Initialize(IServiceProvider serviceProvider)
         {
+            // do not seed DB anymore
+            return;
+
             using (var context = new AssessmentAccContext(
                 serviceProvider.GetRequiredService<
                     DbContextOptions<AssessmentAccContext>>()))
