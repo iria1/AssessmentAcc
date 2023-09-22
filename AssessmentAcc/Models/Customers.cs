@@ -17,6 +17,7 @@ namespace AssessmentAcc.Models
         public string Nama { get; set; }
 
         [Display(Name = "Nomor Telfon")]
+        [Required(ErrorMessage = "Please enter a valid phone number")]
         public string NomorTelp { get; set; }
 
         public string Alamat { get; set; }

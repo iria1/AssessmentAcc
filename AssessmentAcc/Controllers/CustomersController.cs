@@ -61,33 +61,7 @@ namespace AssessmentAcc.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,TipeCustomer,Nama,NomorTelp,Alamat,NomorRekening")] Customers customers)
         {
-            var url = _configuration["PhoneNoValidator:ApiUrl"];
-            var key = _configuration["PhoneNoValidator:ApiKey"];
-            var phoneNo = customers.NomorTelp;
-
-            phoneNo = phoneNo.StartsWith("+62") ? phoneNo.Remove(0, 3) : phoneNo;
-            phoneNo = phoneNo.StartsWith("+62") ? phoneNo.Remove(0, 3) : phoneNo;
-
-            if (phoneNo.StartsWith("+62"))
-            {
-                phoneNo = phoneNo.Remove(0, 3);
-            }
-            else if (phoneNo.StartsWith("0"))
-            {
-                phoneNo = phoneNo.Remove(0, 1);
-            }
-
-            var foo = await url
-                .SetQueryParams(new
-                {
-                    access_key = key,
-                    number = customers.NomorTelp,
-                    country_code = "ID",
-                    format = 1
-                })
-                .GetJsonAsync<PhoneNoValidation>();
-
-            if (foo.valid && ModelState.IsValid)
+            if (await ValidatePhoneNumber(customers.NomorTelp) && ModelState.IsValid)
             {
                 _context.Add(customers);
                 await _context.SaveChangesAsync();
@@ -124,20 +98,7 @@ namespace AssessmentAcc.Controllers
                 return NotFound();
             }
 
-            var url = _configuration["PhoneNoValidator:ApiUrl"];
-            var key = _configuration["PhoneNoValidator:ApiKey"];
-
-            var foo = await url
-                .SetQueryParams(new
-                {
-                    access_key = key,
-                    number = customers.NomorTelp,
-                    country_code = "ID",
-                    format = 1
-                })
-                .GetJsonAsync<PhoneNoValidation>();
-
-            if (foo.valid && ModelState.IsValid)
+            if (await ValidatePhoneNumber(customers.NomorTelp) && ModelState.IsValid)
             {
                 try
                 {
@@ -192,6 +153,34 @@ namespace AssessmentAcc.Controllers
         private bool CustomersExists(long id)
         {
             return _context.Customers.Any(e => e.Id == id);
+        }
+
+        private async Task<bool> ValidatePhoneNumber(string custPhone)
+        {
+            var url = _configuration["PhoneNoValidator:ApiUrl"];
+            var key = _configuration["PhoneNoValidator:ApiKey"];
+            var phoneNo = custPhone;
+
+            if (phoneNo.StartsWith("+62"))
+            {
+                phoneNo = phoneNo.Remove(0, 3);
+            }
+            else if (phoneNo.StartsWith("0"))
+            {
+                phoneNo = phoneNo.Remove(0, 1);
+            }
+
+            var validation = await url
+                .SetQueryParams(new
+                {
+                    access_key = key,
+                    number = phoneNo,
+                    country_code = "ID",
+                    format = 1
+                })
+                .GetJsonAsync<PhoneNoValidation>();
+
+            return validation.valid;
         }
     }
 }
