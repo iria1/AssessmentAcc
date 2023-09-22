@@ -11,12 +11,16 @@ namespace AssessmentAcc.Models
         public long Id { get; set; }
 
         [Display(Name = "ID Transaksi")]
+        [Required]
         public long TransaksiId { get; set; }
 
+        [Required]
         public int Jumlah { get; set; }
 
+        [Required]
         public string Nama { get; set; }
 
+        [Required]
         public string Satuan { get; set; }
     }
 }

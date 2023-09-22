@@ -7,9 +7,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AssessmentAcc.Data;
 using AssessmentAcc.Models;
-using Flurl;
-using Flurl.Http;
 using Microsoft.Extensions.Configuration;
+using AssessmentAcc.CustomValidation;
 
 namespace AssessmentAcc.Controllers
 {
@@ -61,7 +60,7 @@ namespace AssessmentAcc.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,TipeCustomer,Nama,NomorTelp,Alamat,NomorRekening")] Customers customers)
         {
-            if (await ValidatePhoneNumber(customers.NomorTelp) && ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 _context.Add(customers);
                 await _context.SaveChangesAsync();
@@ -98,7 +97,7 @@ namespace AssessmentAcc.Controllers
                 return NotFound();
             }
 
-            if (await ValidatePhoneNumber(customers.NomorTelp) && ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 try
                 {
@@ -153,34 +152,6 @@ namespace AssessmentAcc.Controllers
         private bool CustomersExists(long id)
         {
             return _context.Customers.Any(e => e.Id == id);
-        }
-
-        private async Task<bool> ValidatePhoneNumber(string custPhone)
-        {
-            var url = _configuration["PhoneNoValidator:ApiUrl"];
-            var key = _configuration["PhoneNoValidator:ApiKey"];
-            var phoneNo = custPhone;
-
-            if (phoneNo.StartsWith("+62"))
-            {
-                phoneNo = phoneNo.Remove(0, 3);
-            }
-            else if (phoneNo.StartsWith("0"))
-            {
-                phoneNo = phoneNo.Remove(0, 1);
-            }
-
-            var validation = await url
-                .SetQueryParams(new
-                {
-                    access_key = key,
-                    number = phoneNo,
-                    country_code = "ID",
-                    format = 1
-                })
-                .GetJsonAsync<PhoneNoValidation>();
-
-            return validation.valid;
         }
     }
 }
