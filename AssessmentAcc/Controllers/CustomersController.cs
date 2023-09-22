@@ -7,16 +7,21 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AssessmentAcc.Data;
 using AssessmentAcc.Models;
+using Flurl;
+using Flurl.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace AssessmentAcc.Controllers
 {
     public class CustomersController : Controller
     {
         private readonly AssessmentAccContext _context;
+        private readonly IConfiguration _configuration;
 
-        public CustomersController(AssessmentAccContext context)
+        public CustomersController(AssessmentAccContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // GET: Customers
@@ -56,7 +61,33 @@ namespace AssessmentAcc.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,TipeCustomer,Nama,NomorTelp,Alamat,NomorRekening")] Customers customers)
         {
-            if (ModelState.IsValid)
+            var url = _configuration["PhoneNoValidator:ApiUrl"];
+            var key = _configuration["PhoneNoValidator:ApiKey"];
+            var phoneNo = customers.NomorTelp;
+
+            phoneNo = phoneNo.StartsWith("+62") ? phoneNo.Remove(0, 3) : phoneNo;
+            phoneNo = phoneNo.StartsWith("+62") ? phoneNo.Remove(0, 3) : phoneNo;
+
+            if (phoneNo.StartsWith("+62"))
+            {
+                phoneNo = phoneNo.Remove(0, 3);
+            }
+            else if (phoneNo.StartsWith("0"))
+            {
+                phoneNo = phoneNo.Remove(0, 1);
+            }
+
+            var foo = await url
+                .SetQueryParams(new
+                {
+                    access_key = key,
+                    number = customers.NomorTelp,
+                    country_code = "ID",
+                    format = 1
+                })
+                .GetJsonAsync<PhoneNoValidation>();
+
+            if (foo.valid && ModelState.IsValid)
             {
                 _context.Add(customers);
                 await _context.SaveChangesAsync();
@@ -93,7 +124,20 @@ namespace AssessmentAcc.Controllers
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            var url = _configuration["PhoneNoValidator:ApiUrl"];
+            var key = _configuration["PhoneNoValidator:ApiKey"];
+
+            var foo = await url
+                .SetQueryParams(new
+                {
+                    access_key = key,
+                    number = customers.NomorTelp,
+                    country_code = "ID",
+                    format = 1
+                })
+                .GetJsonAsync<PhoneNoValidation>();
+
+            if (foo.valid && ModelState.IsValid)
             {
                 try
                 {
